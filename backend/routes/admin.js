@@ -661,12 +661,11 @@ router.post('/backup', [auth, adminAuth], async (req, res) => {
 router.get('/settings/:category', [auth, adminAuth], async (req, res) => {
   try {
     const category = req.params.category;
-    const settings = await Settings.getByCategory(category);
-    if (settings) {
-      res.json({ settings, message: 'Settings retrieved successfully' });
-    } else {
-      res.status(404).json({ message: 'Settings not found' });
+    let settings = await Settings.getByCategory(category);
+    if (!settings) {
+      settings = {};
     }
+    res.json({ settings, message: 'Settings retrieved successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -756,7 +755,7 @@ router.put('/change-password', [auth, adminAuth], async (req, res) => {
       return res.status(400).json({ message: 'New password must be at least 6 characters' });
     }
 
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select('+password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -868,6 +867,50 @@ router.get('/reports/export', [auth, adminAuth], async (req, res) => {
         exportedAt: new Date().toISOString()
       });
     }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// GET /api/admin/products
+router.get('/products', [auth, adminAuth], async (req, res) => {
+  try {
+    const products = await Product.find();
+    res.json({ products });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// GET /api/admin/orders
+router.get('/orders', [auth, adminAuth], async (req, res) => {
+  try {
+    const orders = await Order.find();
+    res.json({ orders });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// GET /api/admin/customers
+router.get('/customers', [auth, adminAuth], async (req, res) => {
+  try {
+    const customers = await User.find({ role: 'user' });
+    res.json({ customers });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// GET /api/admin/media/files
+router.get('/media/files', [auth, adminAuth], async (req, res) => {
+  try {
+    // For now, return an empty array. Implement actual file listing as needed.
+    res.json({ files: [] });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });

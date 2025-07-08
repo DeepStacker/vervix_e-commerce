@@ -18,7 +18,7 @@ import {
   FiEyeOff
 } from 'react-icons/fi';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import axios from 'axios';
+import adminApi from '../../api/adminApi';
 import toast from 'react-hot-toast';
 
 const AdminSettings = () => {
@@ -75,24 +75,19 @@ const AdminSettings = () => {
   });
 
   // Fetch current settings
-  const { data: currentSettings, isLoading } = useQuery(
+  const { data: currentSettings, isLoading, error } = useQuery(
     'admin-settings',
     async () => {
-      const settingsResponse = await Promise.allSettled([
-        axios.get('/api/admin/settings/general'),
-        axios.get('/api/admin/settings/notifications'),
-        axios.get('/api/admin/settings/security'),
-        axios.get('/api/admin/settings/payment')
-      ]);
-      
+      const categories = ['general', 'notifications', 'security', 'payment'];
+      const settingsResponse = await Promise.allSettled(
+        categories.map(cat => adminApi.get(`/admin/settings/${cat}`))
+      );
       const settings = {};
       settingsResponse.forEach((result, index) => {
-        const categories = ['general', 'notifications', 'security', 'payment'];
         if (result.status === 'fulfilled') {
           settings[categories[index]] = result.value.data.settings;
         }
       });
-      
       return settings;
     },
     {
@@ -111,7 +106,7 @@ const AdminSettings = () => {
   // Save settings mutation
   const saveSettingsMutation = useMutation(
     async ({ type, settings }) => {
-      const response = await axios.put(`/api/admin/settings/${type}`, settings);
+      const response = await adminApi.put(`/admin/settings/${type}`, settings);
       return response.data;
     },
     {
@@ -128,7 +123,7 @@ const AdminSettings = () => {
   // Change password mutation
   const changePasswordMutation = useMutation(
     async (passwordData) => {
-      const response = await axios.put('/api/admin/change-password', passwordData);
+      const response = await adminApi.put('/admin/change-password', passwordData);
       return response.data;
     },
     {
@@ -209,14 +204,9 @@ const AdminSettings = () => {
     { id: 'account', name: 'Account', icon: FiUser }
   ];
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="animate-pulse bg-gray-200 h-8 rounded w-1/4"></div>
-        <div className="animate-pulse bg-gray-200 h-64 rounded"></div>
-      </div>
-    );
-  }
+  if (isLoading) return <div className="p-8 text-center">Loading settings...</div>;
+  if (error) return <div className="p-8 text-center text-red-600">Failed to load settings. Please try again later.</div>;
+  if (!currentSettings || Object.keys(currentSettings).length === 0) return <div className="p-8 text-center text-gray-500">No settings found.</div>;
 
   return (
     <div className="space-y-6">

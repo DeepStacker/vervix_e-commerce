@@ -18,8 +18,9 @@ import {
   FiShoppingCart
 } from 'react-icons/fi';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import axios from 'axios';
+import adminApi from '../../api/adminApi';
 import toast from 'react-hot-toast';
+import Modal from 'react-modal';
 
 const Orders = () => {
   const queryClient = useQueryClient();
@@ -34,8 +35,26 @@ const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
 
+  // Delete order mutation
+  const deleteOrderMutation = useMutation(
+    async (orderId) => {
+      await adminApi.delete(`/admin/orders/${orderId}`);
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['admin-orders']);
+        toast.success('Order deleted successfully');
+        setShowOrderModal(false);
+        setSelectedOrder(null);
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || 'Failed to delete order');
+      }
+    }
+  );
+
   // Fetch orders
-  const { data: ordersData, isLoading } = useQuery(
+  const { data: ordersData, isLoading, error } = useQuery(
     ['admin-orders', searchTerm, filters],
     async () => {
       const params = new URLSearchParams();
@@ -44,7 +63,7 @@ const Orders = () => {
       if (filters.dateRange) params.append('dateRange', filters.dateRange);
       if (filters.paymentStatus) params.append('paymentStatus', filters.paymentStatus);
       
-      const response = await axios.get(`/api/admin/orders?${params}`);
+      const response = await adminApi.get(`/admin/orders?${params}`);
       return response.data;
     },
     {
@@ -158,7 +177,7 @@ const Orders = () => {
   // Update order status mutation
   const updateStatusMutation = useMutation(
     async ({ orderId, status }) => {
-      await axios.patch(`/api/admin/orders/${orderId}/status`, { status });
+      await adminApi.patch(`/admin/orders/${orderId}/status`, { status });
     },
     {
       onSuccess: () => {
@@ -236,6 +255,10 @@ const Orders = () => {
       default: return 'text-gray-600 bg-gray-100';
     }
   };
+
+  if (isLoading) return <div className="p-8 text-center">Loading orders...</div>;
+  if (error) return <div className="p-8 text-center text-red-600">Failed to load orders. Please try again later.</div>;
+  if (!orders || orders.length === 0) return <div className="p-8 text-center text-gray-500">No orders found.</div>;
 
   return (
     <div className="space-y-6">
@@ -433,10 +456,7 @@ const Orders = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end space-x-2">
                       <button
-                        onClick={() => {
-                          setSelectedOrder(order);
-                          setShowOrderModal(true);
-                        }}
+                        onClick={() => handleOrderClick(order)}
                         className="text-luxury-gold hover:text-luxury-gold-dark"
                         title="View Details"
                       >

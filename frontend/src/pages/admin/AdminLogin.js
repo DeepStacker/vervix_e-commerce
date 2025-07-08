@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiShield, FiArrowRight } from 'react-icons/fi';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import adminApi from '../../api/adminApi';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -66,7 +67,7 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('/api/auth/admin/login', {
+      const response = await adminApi.post('/auth/admin/login', {
         email: formData.email,
         password: formData.password
       });
@@ -78,7 +79,7 @@ const AdminLogin = () => {
       localStorage.setItem('adminUser', JSON.stringify(user));
       
       // Set authorization header for future requests
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      adminApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
       toast.success('Welcome to Vervix Admin!');
       navigate(from, { replace: true });

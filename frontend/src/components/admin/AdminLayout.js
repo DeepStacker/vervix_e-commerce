@@ -19,6 +19,8 @@ import {
 } from 'react-icons/fi';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import adminApi from '../../api/adminApi';
+import { ErrorBoundary } from 'react-error-boundary';
 
 const AdminLayout = ({ children }) => {
   const location = useLocation();
@@ -27,6 +29,7 @@ const AdminLayout = ({ children }) => {
   const [adminUser, setAdminUser] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   // Navigation items
   const navigation = [
@@ -58,7 +61,7 @@ const AdminLayout = ({ children }) => {
     try {
       const user = JSON.parse(adminUserData);
       setAdminUser(user);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${adminToken}`;
+      adminApi.defaults.headers.common['Authorization'] = `Bearer ${adminToken}`;
     } catch (error) {
       localStorage.removeItem('adminToken');
       localStorage.removeItem('adminUser');
@@ -69,7 +72,7 @@ const AdminLayout = ({ children }) => {
   // Load notifications
   const loadNotifications = async () => {
     try {
-      const response = await axios.get('/api/admin/notifications');
+      const response = await adminApi.get('/admin/notifications');
       setNotifications(response.data.notifications || []);
     } catch (error) {
       console.error('Failed to load notifications:', error);
@@ -77,10 +80,18 @@ const AdminLayout = ({ children }) => {
   };
 
   // Handle logout
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      // Call backend logout endpoint if it exists
+      await adminApi.post('/auth/logout');
+    } catch (err) {
+      // Ignore errors, proceed to clear state
+    }
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminUser');
-    delete axios.defaults.headers.common['Authorization'];
+    adminApi.defaults.headers.common['Authorization'] = '';
+    setLoggingOut(false);
     toast.success('Logged out successfully');
     navigate('/admin/login');
   };
@@ -171,10 +182,11 @@ const AdminLayout = ({ children }) => {
             </div>
             <button
               onClick={handleLogout}
+              disabled={loggingOut}
               className="p-1 text-gray-400 hover:text-white"
               title="Logout"
             >
-              <FiLogOut size={16} />
+              {loggingOut ? 'Logging out...' : <FiLogOut size={16} />}
             </button>
           </div>
         </div>
@@ -263,9 +275,10 @@ const AdminLayout = ({ children }) => {
                         </Link>
                         <button
                           onClick={handleLogout}
+                          disabled={loggingOut}
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         >
-                          Sign Out
+                          {loggingOut ? 'Logging out...' : 'Sign Out'}
                         </button>
                       </motion.div>
                     )}
@@ -277,17 +290,19 @@ const AdminLayout = ({ children }) => {
 
           {/* Page Content */}
           <main className="p-4 sm:p-6 lg:p-8">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={location.pathname}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                {children}
-              </motion.div>
-            </AnimatePresence>
+            <ErrorBoundary>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={location.pathname}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {children}
+                </motion.div>
+              </AnimatePresence>
+            </ErrorBoundary>
           </main>
         </div>
       </div>

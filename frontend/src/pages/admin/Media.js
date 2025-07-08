@@ -14,7 +14,7 @@ import {
   FiDownload,
   FiMoreVertical
 } from 'react-icons/fi';
-import axios from 'axios';
+import adminApi from '../../api/adminApi';
 import toast from 'react-hot-toast';
 
 const AdminMedia = () => {
@@ -26,6 +26,8 @@ const AdminMedia = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [selectedFiles, setSelectedFiles] = useState(new Set());
   const [showPreview, setShowPreview] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Load media files on component mount
   useEffect(() => {
@@ -33,12 +35,15 @@ const AdminMedia = () => {
   }, []);
 
   const loadMediaFiles = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const response = await axios.get('/api/upload/files?folder=media');
+      const response = await adminApi.get('/admin/media/files');
       setMediaFiles(response.data.files || []);
-    } catch (error) {
-      console.error('Failed to load media files:', error);
-      toast.error('Failed to load media files');
+    } catch (err) {
+      setError('Failed to load media files. Please try again later.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -58,7 +63,7 @@ const AdminMedia = () => {
     formData.append('file', selectedFile);
 
     try {
-      const response = await axios.post('/api/media/upload', formData, {
+      const response = await adminApi.post('/admin/media/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -85,7 +90,7 @@ const AdminMedia = () => {
     }
 
     try {
-      await axios.delete(`/api/media/delete/${fileName}`);
+      await adminApi.delete(`/admin/media/delete/${fileName}`);
       setMediaFiles(prev => prev.filter(file => file.fileName !== fileName));
       toast.success('File deleted successfully!');
     } catch (error) {
@@ -105,7 +110,7 @@ const AdminMedia = () => {
     }
 
     const deletePromises = Array.from(selectedFiles).map(fileName => 
-      axios.delete(`/api/media/delete/${fileName}`)
+      adminApi.delete(`/admin/media/delete/${fileName}`)
     );
 
     try {
@@ -118,6 +123,10 @@ const AdminMedia = () => {
       toast.error('Failed to delete some files');
     }
   };
+
+  if (loading) return <div className="p-8 text-center">Loading media files...</div>;
+  if (error) return <div className="p-8 text-center text-red-600">{error}</div>;
+  if (!mediaFiles || mediaFiles.length === 0) return <div className="p-8 text-center text-gray-500">No media files found.</div>;
 
   return (
     <div className="p-8 max-w-3xl mx-auto">
@@ -132,7 +141,6 @@ const AdminMedia = () => {
         </button>
       </form>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {mediaFiles.length === 0 && <p className="col-span-3 text-gray-500">No media uploaded yet.</p>}
         {mediaFiles.map(file => (
           <div key={file.name} className="bg-white rounded shadow p-4 flex flex-col items-center">
             {file.url && file.url.match(/\.(jpg|jpeg|png|gif)$/i) ? (

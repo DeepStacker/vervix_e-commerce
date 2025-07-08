@@ -17,8 +17,11 @@ import {
   FiDownload,
   FiMail as FiSendMail
 } from 'react-icons/fi';
-import { useQuery } from 'react-query';
-import axios from 'axios';
+import { useQuery, useMutation } from 'react-query';
+import adminApi from '../../api/adminApi';
+import Modal from 'react-modal';
+import { toast } from 'react-toastify';
+import { useQueryClient } from 'react-query';
 
 const Customers = () => {
   const [selectedCustomers, setSelectedCustomers] = useState([]);
@@ -32,18 +35,20 @@ const Customers = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [showCustomerModal, setShowCustomerModal] = useState(false);
 
+  const queryClient = useQueryClient();
+
   // Fetch customers
-  const { data: customersData, isLoading } = useQuery(
+  const { data: customersData, isLoading, error } = useQuery(
     ['admin-customers', searchTerm, filters],
     async () => {
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
-      if (filters.status) params.append('status', filters.status);
-      if (filters.tier) params.append('tier', filters.tier);
       if (filters.dateRange) params.append('dateRange', filters.dateRange);
-      
-      const response = await axios.get(`/api/admin/customers?${params}`);
+      const response = await adminApi.get(`/admin/customers?${params}`);
       return response.data;
+    },
+    {
+      refetchInterval: 30000, // Refetch every 30 seconds
     }
   );
 
@@ -192,9 +197,64 @@ const Customers = () => {
       case 'silver': return '🥈';
       case 'gold': return '🥇';
       case 'platinum': return '💎';
-      default: return '👤';
+      default: return '��';
     }
   };
+
+  // Edit customer mutation
+  const editCustomerMutation = useMutation(
+    async ({ id, formData }) => {
+      await adminApi.put(`/admin/customers/${id}`, formData);
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['admin-customers']);
+        toast.success('Customer updated successfully');
+        setShowCustomerModal(false);
+        setSelectedCustomer(null);
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || 'Failed to update customer');
+      }
+    }
+  );
+
+  // Delete customer mutation
+  const deleteCustomerMutation = useMutation(
+    async (customerId) => {
+      await adminApi.delete(`/admin/customers/${customerId}`);
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['admin-customers']);
+        toast.success('Customer deleted successfully');
+        setShowCustomerModal(false);
+        setSelectedCustomer(null);
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || 'Failed to delete customer');
+      }
+    }
+  );
+
+  const handleCustomerClick = (customer) => {
+    setSelectedCustomer(customer);
+    setShowCustomerModal(true);
+  };
+  const handleCustomerEdit = (formData) => {
+    if (selectedCustomer) {
+      editCustomerMutation.mutate({ id: selectedCustomer._id, formData });
+    }
+  };
+  const handleCustomerDelete = (customerId) => {
+    if (window.confirm('Are you sure you want to delete this customer?')) {
+      deleteCustomerMutation.mutate(customerId);
+    }
+  };
+
+  if (isLoading) return <div className="p-8 text-center">Loading customers...</div>;
+  if (error) return <div className="p-8 text-center text-red-600">Failed to load customers. Please try again later.</div>;
+  if (!customers || customers.length === 0) return <div className="p-8 text-center text-gray-500">No customers found.</div>;
 
   return (
     <div className="space-y-6">
@@ -349,10 +409,7 @@ const Customers = () => {
                     className="w-4 h-4 text-luxury-gold border-gray-300 rounded focus:ring-luxury-gold"
                   />
                   <button
-                    onClick={() => {
-                      setSelectedCustomer(customer);
-                      setShowCustomerModal(true);
-                    }}
+                    onClick={() => handleCustomerClick(customer)}
                     className="text-luxury-gold hover:text-luxury-gold-dark"
                   >
                     <FiEye className="h-4 w-4" />
@@ -434,153 +491,48 @@ const Customers = () => {
 
       {/* Customer Details Modal */}
       <AnimatePresence>
-        {showCustomerModal && selectedCustomer && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 overflow-y-auto"
-          >
-            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowCustomerModal(false)}></div>
-
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"
-              >
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center">
-                      <div className="w-16 h-16 bg-luxury-gold rounded-full flex items-center justify-center text-white font-semibold text-xl mr-4">
-                        {selectedCustomer.firstName.charAt(0)}{selectedCustomer.lastName.charAt(0)}
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-900">
-                          {selectedCustomer.firstName} {selectedCustomer.lastName}
-                        </h3>
-                        <p className="text-gray-500">{selectedCustomer.email}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setShowCustomerModal(false)}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <FiX className="h-6 w-6" />
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Customer Information */}
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-4">Customer Information</h4>
-                      <div className="space-y-3">
-                        <div className="flex items-center">
-                          <FiMail className="h-4 w-4 text-gray-400 mr-3" />
-                          <span className="text-sm">{selectedCustomer.email}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <FiPhone className="h-4 w-4 text-gray-400 mr-3" />
-                          <span className="text-sm">{selectedCustomer.phone}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <FiCalendar className="h-4 w-4 text-gray-400 mr-3" />
-                          <span className="text-sm">Member since {formatDate(selectedCustomer.registrationDate)}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${getTierColor(selectedCustomer.tier)}`}>
-                            <span className="mr-1">{getTierIcon(selectedCustomer.tier)}</span>
-                            {selectedCustomer.tier.charAt(0).toUpperCase() + selectedCustomer.tier.slice(1)} Tier
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Addresses */}
-                      {selectedCustomer.addresses && selectedCustomer.addresses.length > 0 && (
-                        <div className="mt-6">
-                          <h5 className="font-medium text-gray-900 mb-3">Addresses</h5>
-                          {selectedCustomer.addresses.map((address, index) => (
-                            <div key={index} className="flex items-start mb-3">
-                              <FiMapPin className="h-4 w-4 text-gray-400 mr-3 mt-0.5" />
-                              <div className="text-sm">
-                                <div className="font-medium capitalize">{address.type} Address</div>
-                                <div>{address.street}</div>
-                                <div>{address.city}, {address.state} {address.zipCode}</div>
-                                <div>{address.country}</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Order Statistics */}
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-4">Order Statistics</h4>
-                      <div className="grid grid-cols-2 gap-4 mb-6">
-                        <div className="text-center p-4 bg-gray-50 rounded-lg">
-                          <div className="text-2xl font-bold text-gray-900">{selectedCustomer.totalOrders}</div>
-                          <div className="text-sm text-gray-500">Total Orders</div>
-                        </div>
-                        <div className="text-center p-4 bg-gray-50 rounded-lg">
-                          <div className="text-xl font-bold text-gray-900">
-                            {formatCurrency(selectedCustomer.totalSpent)}
-                          </div>
-                          <div className="text-sm text-gray-500">Total Spent</div>
-                        </div>
-                        <div className="text-center p-4 bg-gray-50 rounded-lg">
-                          <div className="text-lg font-bold text-gray-900">
-                            {formatCurrency(selectedCustomer.averageOrderValue)}
-                          </div>
-                          <div className="text-sm text-gray-500">Avg Order Value</div>
-                        </div>
-                        <div className="text-center p-4 bg-gray-50 rounded-lg">
-                          <div className="text-lg font-bold text-gray-900">
-                            {formatDate(selectedCustomer.lastOrderDate)}
-                          </div>
-                          <div className="text-sm text-gray-500">Last Order</div>
-                        </div>
-                      </div>
-
-                      {/* Recent Orders */}
-                      <h5 className="font-medium text-gray-900 mb-3">Recent Orders</h5>
-                      <div className="space-y-2">
-                        {selectedCustomer.recentOrders.map((order, index) => (
-                          <div key={index} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                            <div>
-                              <div className="font-medium text-sm">{order.orderNumber}</div>
-                              <div className="text-xs text-gray-500">{formatDate(order.date)}</div>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-medium text-sm">{formatCurrency(order.total)}</div>
-                              <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
-                                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button
-                    onClick={() => setShowCustomerModal(false)}
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-luxury-gold text-base font-medium text-white hover:bg-luxury-gold-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-luxury-gold sm:ml-3 sm:w-auto sm:text-sm"
-                  >
+        <Modal
+          isOpen={showCustomerModal}
+          onRequestClose={() => { setShowCustomerModal(false); setSelectedCustomer(null); }}
+          contentLabel="Customer Details"
+          ariaHideApp={false}
+          className="modal"
+          overlayClassName="modal-overlay"
+        >
+          {selectedCustomer && (
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold mb-2">{selectedCustomer.firstName} {selectedCustomer.lastName}</h2>
+              <div>
+                <strong>Email:</strong> {selectedCustomer.email}
+              </div>
+              <div>
+                <strong>Phone:</strong> {selectedCustomer.phone}
+              </div>
+              <div>
+                <strong>Address:</strong> {selectedCustomer.address}
+              </div>
+              {/* Add more fields as needed */}
+              <form onSubmit={e => { e.preventDefault(); handleCustomerEdit(new FormData(e.target)); }} className="space-y-2">
+                <input name="firstName" defaultValue={selectedCustomer.firstName} className="input" />
+                <input name="lastName" defaultValue={selectedCustomer.lastName} className="input" />
+                <input name="email" defaultValue={selectedCustomer.email} className="input" />
+                <input name="phone" defaultValue={selectedCustomer.phone} className="input" />
+                {/* Add more editable fields as needed */}
+                <div className="flex space-x-2 mt-4">
+                  <button type="submit" className="btn btn-primary" disabled={editCustomerMutation.isLoading}>
+                    {editCustomerMutation.isLoading ? 'Updating...' : 'Update'}
+                  </button>
+                  <button type="button" onClick={() => handleCustomerDelete(selectedCustomer._id)} className="btn btn-secondary" disabled={deleteCustomerMutation.isLoading}>
+                    {deleteCustomerMutation.isLoading ? 'Deleting...' : 'Delete'}
+                  </button>
+                  <button type="button" onClick={() => { setShowCustomerModal(false); setSelectedCustomer(null); }} className="btn">
                     Close
                   </button>
-                  <button className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-luxury-gold sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                    <FiMail className="h-4 w-4 mr-2" />
-                    Send Email
-                  </button>
                 </div>
-              </motion.div>
+              </form>
             </div>
-          </motion.div>
-        )}
+          )}
+        </Modal>
       </AnimatePresence>
     </div>
   );

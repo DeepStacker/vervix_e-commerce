@@ -14,8 +14,10 @@ import {
   FiEdit3
 } from 'react-icons/fi';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import axios from 'axios';
+import adminApi from '../../api/adminApi';
 import toast from 'react-hot-toast';
+import Modal from 'react-modal';
+import { useForm } from 'react-hook-form';
 
 const Products = () => {
   const queryClient = useQueryClient();
@@ -28,9 +30,13 @@ const Products = () => {
     priceRange: ''
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [selectedImages, setSelectedImages] = useState([]);
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm();
 
   // Fetch products
-  const { data: productsData, isLoading } = useQuery(
+  const { data: productsData, isLoading, error } = useQuery(
     ['admin-products', searchTerm, filters],
     async () => {
       const params = new URLSearchParams();
@@ -39,7 +45,7 @@ const Products = () => {
       if (filters.status) params.append('status', filters.status);
       if (filters.priceRange) params.append('priceRange', filters.priceRange);
       
-      const response = await axios.get(`/api/admin/products?${params}`);
+      const response = await adminApi.get(`/products?${params}`);
       return response.data;
     },
     {
@@ -47,53 +53,13 @@ const Products = () => {
     }
   );
 
-  // Mock data for development
-  const mockProducts = [
-    {
-      _id: '1',
-      name: 'Luxury Silk Shirt',
-      description: 'Premium silk shirt with elegant design',
-      price: 299.99,
-      originalPrice: 399.99,
-      category: 'Shirts',
-      brand: 'Vervix',
-      status: 'active',
-      stock: 45,
-      images: ['https://via.placeholder.com/300x400'],
-      variants: [
-        { size: 'S', color: 'Black', stock: 15 },
-        { size: 'M', color: 'Black', stock: 20 },
-        { size: 'L', color: 'Black', stock: 10 }
-      ],
-      tags: ['luxury', 'silk', 'premium'],
-      createdAt: new Date().toISOString()
-    },
-    {
-      _id: '2',
-      name: 'Premium Denim Jacket',
-      description: 'High-quality denim jacket with premium finish',
-      price: 199.99,
-      originalPrice: 249.99,
-      category: 'Jackets',
-      brand: 'Vervix',
-      status: 'active',
-      stock: 32,
-      images: ['https://via.placeholder.com/300x400'],
-      variants: [
-        { size: 'M', color: 'Blue', stock: 12 },
-        { size: 'L', color: 'Blue', stock: 20 }
-      ],
-      tags: ['denim', 'jacket', 'premium'],
-      createdAt: new Date().toISOString()
-    }
-  ];
-
-  const products = productsData?.products || mockProducts;
+  // Remove mockProducts and use only productsData from backend
+  const products = productsData?.products || [];
 
   // Delete product mutation
   const deleteMutation = useMutation(
     async (productId) => {
-      await axios.delete(`/api/admin/products/${productId}`);
+      await adminApi.delete(`/products/${productId}`);
     },
     {
       onSuccess: () => {
@@ -110,7 +76,8 @@ const Products = () => {
   // Bulk delete mutation
   const bulkDeleteMutation = useMutation(
     async (productIds) => {
-      await axios.post('/api/admin/products/bulk-delete', { productIds });
+      // No bulk endpoint in backend, so delete one by one
+      await Promise.all(productIds.map(id => adminApi.delete(`/products/${id}`)));
     },
     {
       onSuccess: () => {
@@ -123,6 +90,85 @@ const Products = () => {
       }
     }
   );
+
+  // Fetch categories for the form
+  const { data: categoriesData, isLoading: categoriesLoading } = useQuery(
+    'categories',
+    async () => {
+      const response = await adminApi.get('/categories');
+      return response.data;
+    }
+  );
+  const categories = categoriesData?.data || [];
+
+  // Add product mutation
+  const addProductMutation = useMutation(
+    async (formData) => {
+      await adminApi.post('/products', formData);
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['admin-products']);
+        toast.success('Product added successfully');
+        setModalOpen(false);
+        reset();
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || 'Failed to add product');
+      }
+    }
+  );
+
+  // Edit product mutation
+  const editProductMutation = useMutation(
+    async ({ id, formData }) => {
+      await adminApi.put(`/products/${id}`, formData);
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['admin-products']);
+        toast.success('Product updated successfully');
+        setModalOpen(false);
+        setEditingProduct(null);
+        reset();
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || 'Failed to update product');
+      }
+    }
+  );
+
+  const handleAddProduct = () => {
+    setEditingProduct(null);
+    reset();
+    setSelectedImages([]); // Clear selected images for new product
+    setModalOpen(true);
+  };
+  const handleEditProduct = (product) => {
+    setEditingProduct(product);
+    // Pre-fill form fields
+    Object.entries(product).forEach(([key, value]) => setValue(key, value));
+    setSelectedImages(product.images.map(img => new File([], img, { type: 'image/jpeg' }))); // Pre-fill with existing images
+    setModalOpen(true);
+  };
+  const handleImageChange = (e) => {
+    setSelectedImages(Array.from(e.target.files));
+  };
+
+  const onSubmit = (data) => {
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
+    selectedImages.forEach((file) => {
+      formData.append('images', file);
+    });
+    if (editingProduct) {
+      editProductMutation.mutate({ id: editingProduct._id, formData });
+    } else {
+      addProductMutation.mutate(formData);
+    }
+  };
 
   // Handle product selection
   const handleProductSelect = (productId) => {
@@ -176,6 +222,10 @@ const Products = () => {
     }
   };
 
+  if (isLoading) return <div className="p-8 text-center">Loading products...</div>;
+  if (error) return <div className="p-8 text-center text-red-600">Failed to load products. Please try again later.</div>;
+  if (!products || products.length === 0) return <div className="p-8 text-center text-gray-500">No products found.</div>;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -186,6 +236,7 @@ const Products = () => {
         </div>
         <div className="flex items-center space-x-3">
           <button
+            onClick={handleAddProduct}
             className="flex items-center px-4 py-2 bg-luxury-gold text-white rounded-lg hover:bg-luxury-gold-dark transition-colors"
           >
             <FiPlus className="h-4 w-4 mr-2" />
@@ -370,6 +421,7 @@ const Products = () => {
                 </div>
                 <div className="absolute top-2 right-2 flex space-x-1">
                   <button
+                    onClick={() => handleEditProduct(product)}
                     className="p-1 bg-white/90 rounded-full hover:bg-white transition-colors"
                   >
                     <FiEdit3 className="h-3 w-3 text-gray-600" />
@@ -494,6 +546,7 @@ const Products = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end space-x-2">
                       <button
+                        onClick={() => handleEditProduct(product)}
                         className="text-luxury-gold hover:text-luxury-gold-dark"
                       >
                         <FiEdit3 className="h-4 w-4" />
@@ -523,6 +576,7 @@ const Products = () => {
           </p>
           <div className="mt-6">
             <button
+              onClick={handleAddProduct}
               className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-luxury-gold hover:bg-luxury-gold-dark"
             >
               <FiPlus className="h-4 w-4 mr-2" />
@@ -531,6 +585,90 @@ const Products = () => {
           </div>
         </div>
       )}
+
+      <Modal
+        isOpen={modalOpen}
+        onRequestClose={() => { setModalOpen(false); setEditingProduct(null); }}
+        contentLabel={editingProduct ? 'Edit Product' : 'Add Product'}
+        ariaHideApp={false}
+        className="modal"
+        overlayClassName="modal-overlay"
+      >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <h2 className="text-xl font-bold mb-2">{editingProduct ? 'Edit Product' : 'Add Product'}</h2>
+          <div>
+            <label className="block font-medium">Name</label>
+            <input {...register('name', { required: true })} className="input" />
+            {errors.name && <span className="text-red-600 text-xs">Name is required</span>}
+          </div>
+          <div>
+            <label className="block font-medium">Description</label>
+            <textarea {...register('description', { required: true })} className="input" />
+            {errors.description && <span className="text-red-600 text-xs">Description is required</span>}
+          </div>
+          <div>
+            <label className="block font-medium">Price</label>
+            <input type="number" step="0.01" {...register('price', { required: true })} className="input" />
+            {errors.price && <span className="text-red-600 text-xs">Price is required</span>}
+          </div>
+          <div>
+            <label className="block font-medium">SKU</label>
+            <input {...register('sku', { required: true })} className="input" />
+            {errors.sku && <span className="text-red-600 text-xs">SKU is required</span>}
+          </div>
+          <div>
+            <label className="block font-medium">Category</label>
+            <select {...register('category', { required: true })} className="input">
+              <option value="">Select Category</option>
+              {categories.map(cat => (
+                <option key={cat._id} value={cat._id}>{cat.name}</option>
+              ))}
+            </select>
+            {errors.category && <span className="text-red-600 text-xs">Category is required</span>}
+          </div>
+          <div>
+            <label className="block font-medium">Brand</label>
+            <input {...register('brand', { required: true })} className="input" />
+            {errors.brand && <span className="text-red-600 text-xs">Brand is required</span>}
+          </div>
+          <div>
+            <label className="block font-medium">Gender</label>
+            <select {...register('gender', { required: true })} className="input">
+              <option value="">Select Gender</option>
+              <option value="men">Men</option>
+              <option value="women">Women</option>
+              <option value="unisex">Unisex</option>
+            </select>
+            {errors.gender && <span className="text-red-600 text-xs">Gender is required</span>}
+          </div>
+          <div>
+            <label className="block font-medium">Images</label>
+            <input type="file" accept="image/*" multiple onChange={handleImageChange} />
+            <div className="flex space-x-2 mt-2">
+              {selectedImages.map((file, idx) => (
+                <img
+                  key={idx}
+                  src={URL.createObjectURL(file)}
+                  alt="Preview"
+                  className="h-16 w-16 object-cover rounded border"
+                />
+              ))}
+            </div>
+          </div>
+          {/* Add more fields as needed for your model */}
+          <div className="flex space-x-2 mt-4">
+            <button type="submit" className="btn btn-primary" disabled={addProductMutation.isLoading || editProductMutation.isLoading}>
+              {editingProduct ? (editProductMutation.isLoading ? 'Updating...' : 'Update') : (addProductMutation.isLoading ? 'Adding...' : 'Add')}
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={() => { setModalOpen(false); setEditingProduct(null); }}>
+              Cancel
+            </button>
+          </div>
+          {(addProductMutation.isError || editProductMutation.isError) && (
+            <div className="text-red-600 text-xs mt-2">{addProductMutation.error?.message || editProductMutation.error?.message}</div>
+          )}
+        </form>
+      </Modal>
     </div>
   );
 };

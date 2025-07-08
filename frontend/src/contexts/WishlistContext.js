@@ -92,7 +92,7 @@ export const WishlistProvider = ({ children }) => {
   // Load wishlist from server on mount if authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      loadWishlist();
+    loadWishlist();
     }
   }, [isAuthenticated]);
 

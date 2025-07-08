@@ -14,11 +14,13 @@ import {
   FiRefreshCw,
   FiArrowUp,
   FiArrowDown,
-  FiActivity
+  FiActivity,
+  FiSettings,
+  FiLogOut
 } from 'react-icons/fi';
 import { useQuery } from 'react-query';
-import axios from 'axios';
-import { Link } from 'react-router-dom';
+import adminApi from '../../api/adminApi';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -47,12 +49,13 @@ ChartJS.register(
 
 const Dashboard = () => {
   const [timeRange, setTimeRange] = useState('7d');
+  const navigate = useNavigate();
 
   // Fetch dashboard data
   const { data: dashboardData, isLoading } = useQuery(
     ['admin-dashboard', timeRange],
     async () => {
-      const response = await axios.get(`/api/admin/dashboard?timeRange=${timeRange}`);
+      const response = await adminApi.get(`/admin/dashboard?timeRange=${timeRange}`);
       return response.data;
     },
     {
@@ -188,6 +191,25 @@ const Dashboard = () => {
           <p className="text-gray-600">Welcome to your Vervix admin dashboard</p>
         </div>
         <div className="flex items-center space-x-2">
+          <button
+            onClick={() => navigate('/admin/settings')}
+            className="p-2 rounded-full hover:bg-gray-100"
+            title="Settings"
+          >
+            <FiSettings className="h-5 w-5 text-gray-600" />
+          </button>
+          <button
+            onClick={() => {
+              localStorage.removeItem('adminToken');
+              localStorage.removeItem('adminUser');
+              adminApi.defaults.headers.common['Authorization'] = '';
+              navigate('/admin/login');
+            }}
+            className="p-2 rounded-full hover:bg-gray-100"
+            title="Logout"
+          >
+            <FiLogOut className="h-5 w-5 text-gray-600" />
+          </button>
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}

@@ -13,7 +13,7 @@ import {
   FiDownload
 } from 'react-icons/fi';
 import { useQuery } from 'react-query';
-import axios from 'axios';
+import adminApi from '../../api/adminApi';
 
 const Analytics = () => {
   const [timeRange, setTimeRange] = useState('30d');
@@ -23,8 +23,19 @@ const Analytics = () => {
   const { data: analyticsData, isLoading } = useQuery(
     ['admin-analytics', timeRange],
     async () => {
-      const response = await axios.get(`/api/admin/analytics?timeRange=${timeRange}`);
-      return response.data;
+      const [sales, users, products] = await Promise.all([
+        adminApi.get('/admin/analytics/sales'),
+        adminApi.get('/admin/analytics/users'),
+        adminApi.get('/admin/analytics/products')
+      ]);
+      return {
+        sales: sales.data,
+        users: users.data,
+        products: products.data
+      };
+    },
+    {
+      refetchInterval: 30000, // Refetch every 30 seconds
     }
   );
 
@@ -69,7 +80,13 @@ const Analytics = () => {
     ]
   };
 
-  const data = analyticsData || mockData;
+  const data = {
+    overview: analyticsData?.sales?.overview || mockData.overview,
+    revenueData: analyticsData?.sales?.salesData || mockData.revenueData,
+    topProducts: analyticsData?.sales?.productPerformance || mockData.topProducts,
+    customerSegments: analyticsData?.users?.demographics || mockData.customerSegments,
+    salesByCategory: analyticsData?.sales?.categoryPerformance || mockData.salesByCategory
+  };
 
   // Format currency
   const formatCurrency = (amount) => {
