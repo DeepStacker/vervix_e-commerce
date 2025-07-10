@@ -124,9 +124,213 @@ router.get('/', optionalAuth, async (req, res) => {
       )
     }));
 
+   const data = [
+  {
+    "name": "Classic White T-Shirt",
+    "description": "A soft cotton t-shirt ideal for everyday wear.",
+    "shortDescription": "Soft cotton t-shirt.",
+    "price": 29.99,
+    "sku": "TSHIRT001",
+    "gender": "unisex",
+    "brand": "Vervix Essentials",
+    "category": "64a7d9f5a05e49001234abcd",
+    "tags": ["t-shirt", "white", "cotton"],
+    "images": [
+      {
+        "url": "https://via.placeholder.com/400x600?text=White+T-Shirt",
+        "alt": "Classic White T-Shirt",
+        "isPrimary": true
+      }
+    ],
+    "variants": [
+      {
+        "size": "M",
+        "color": "White",
+        "sku": "TSHIRT001-M",
+        "stock": 100,
+        "price": 29.99
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "sku": "TSHIRT001-L",
+        "stock": 80,
+        "price": 29.99
+      }
+    ],
+    "inventory": {
+      "quantity": 180,
+      "availableQuantity": 180
+    },
+    "seo": {
+      "title": "Classic White T-Shirt",
+      "description": "Timeless white t-shirt for any wardrobe.",
+      "keywords": ["t-shirt", "cotton", "basic"],
+      "slug": "classic-white-t-shirt"
+    },
+    "status": "active"
+  },
+  {
+    "name": "Slim Fit Blue Jeans",
+    "description": "Fitted jeans in classic blue denim with modern style.",
+    "price": 59.99,
+    "sku": "JEANS001",
+    "gender": "men",
+    "brand": "Denim House",
+    "category": "64a7d9f5a05e49001234abcd",
+    "tags": ["jeans", "denim", "slim-fit"],
+    "images": [
+      {
+        "url": "https://via.placeholder.com/400x600?text=Blue+Jeans",
+        "alt": "Slim Fit Blue Jeans",
+        "isPrimary": true
+      }
+    ],
+    "variants": [
+      {
+        "size": "32",
+        "color": "Blue",
+        "sku": "JEANS001-32",
+        "stock": 60,
+        "price": 59.99
+      },
+      {
+        "size": "34",
+        "color": "Blue",
+        "sku": "JEANS001-34",
+        "stock": 40,
+        "price": 59.99
+      }
+    ],
+    "inventory": {
+      "quantity": 100,
+      "availableQuantity": 100
+    },
+    "seo": {
+      "title": "Slim Fit Blue Jeans",
+      "description": "Modern blue denim jeans for daily wear.",
+      "keywords": ["jeans", "denim", "slim"],
+      "slug": "slim-fit-blue-jeans"
+    },
+    "status": "active"
+  },
+  {
+    "name": "Leather Crossbody Bag",
+    "description": "Premium leather crossbody bag with adjustable strap.",
+    "price": 119.99,
+    "sku": "BAG001",
+    "gender": "women",
+    "brand": "Urban Vogue",
+    "category": "64a7d9f5a05e49001234abcd",
+    "tags": ["bag", "leather", "crossbody"],
+    "images": [
+      {
+        "url": "https://via.placeholder.com/400x600?text=Leather+Bag",
+        "alt": "Leather Crossbody Bag",
+        "isPrimary": true
+      }
+    ],
+    "variants": [
+      {
+        "size": "ONE_SIZE",
+        "color": "Brown",
+        "sku": "BAG001-BRN",
+        "stock": 30,
+        "price": 119.99
+      }
+    ],
+    "inventory": {
+      "quantity": 30,
+      "availableQuantity": 30
+    },
+    "seo": {
+      "title": "Leather Crossbody Bag",
+      "description": "Elegant leather bag for stylish women.",
+      "keywords": ["leather", "bag", "accessory"],
+      "slug": "leather-crossbody-bag"
+    },
+    "status": "active"
+  },
+  {
+    "name": "Oversized Hoodie",
+    "description": "Warm oversized fleece hoodie for chilly evenings.",
+    "price": 49.99,
+    "sku": "HOODIE001",
+    "gender": "unisex",
+    "brand": "Chillwear",
+    "category": "64a7d9f5a05e49001234abcd",
+    "tags": ["hoodie", "fleece", "oversized"],
+    "images": [
+      {
+        "url": "https://via.placeholder.com/400x600?text=Oversized+Hoodie",
+        "alt": "Oversized Hoodie",
+        "isPrimary": true
+      }
+    ],
+    "variants": [
+      {
+        "size": "L",
+        "color": "Gray",
+        "sku": "HOODIE001-GRY-L",
+        "stock": 75,
+        "price": 49.99
+      }
+    ],
+    "inventory": {
+      "quantity": 75,
+      "availableQuantity": 75
+    },
+    "seo": {
+      "title": "Oversized Hoodie",
+      "description": "Cozy and oversized for maximum comfort.",
+      "keywords": ["hoodie", "oversized", "unisex"],
+      "slug": "oversized-hoodie"
+    },
+    "status": "active"
+  },
+  {
+    "name": "Formal Oxford Shoes",
+    "description": "Elegant leather Oxford shoes for business and events.",
+    "price": 99.99,
+    "sku": "SHOE001",
+    "gender": "men",
+    "brand": "Gent & Co.",
+    "category": "64a7d9f5a05e49001234abcd",
+    "tags": ["oxford", "leather", "shoes"],
+    "images": [
+      {
+        "url": "https://via.placeholder.com/400x600?text=Oxford+Shoes",
+        "alt": "Formal Oxford Shoes",
+        "isPrimary": true
+      }
+    ],
+    "variants": [
+      {
+        "size": "10",
+        "color": "Black",
+        "sku": "SHOE001-BLK-10",
+        "stock": 40,
+        "price": 99.99
+      }
+    ],
+    "inventory": {
+      "quantity": 40,
+      "availableQuantity": 40
+    },
+    "seo": {
+      "title": "Formal Oxford Shoes",
+      "description": "Polished style for formal wear.",
+      "keywords": ["oxford", "formal", "leather"],
+      "slug": "formal-oxford-shoes"
+    },
+    "status": "active"
+  }
+]
+
+
     res.json({
       success: true,
-      data: transformedProducts,
+      data: data,
       pagination: {
         currentPage: parseInt(page),
         totalPages,

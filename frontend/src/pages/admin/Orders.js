@@ -35,6 +35,11 @@ const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
 
+ const handleOrderClick = (order) => {
+   setSelectedOrder(order);
+   setShowOrderModal(true);
+ };
+
   // Delete order mutation
   const deleteOrderMutation = useMutation(
     async (orderId) => {

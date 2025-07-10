@@ -51,6 +51,7 @@ import Customers from './pages/admin/Customers';
 import Analytics from './pages/admin/Analytics';
 import AdminSettings from './pages/admin/Settings';
 import AdminMedia from './pages/admin/Media';
+import CreateProductForm from './pages/admin/CreateProductForm';
 
 // Import actual components
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -72,6 +73,9 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  useEffect(() => {
+    console.log('Frontend attempting to start on port 5000');
+  }, []);
   useEffect(() => {
     // Initialize AOS (Animate On Scroll)
     AOS.init({
@@ -135,6 +139,7 @@ function App() {
                               <Route path="/" element={<Dashboard />} />
                               <Route path="/dashboard" element={<Dashboard />} />
                               <Route path="/products" element={<Products />} />
+                              <Route path="/add/product" element={<CreateProductForm />} />
                               <Route path="/orders" element={<Orders />} />
                               <Route path="/customers" element={<Customers />} />
                               <Route path="/analytics" element={<Analytics />} />

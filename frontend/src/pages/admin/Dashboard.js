@@ -34,6 +34,7 @@ import {
   ArcElement
 } from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import CreateProductForm from './CreateProductForm'
 
 ChartJS.register(
   CategoryScale,
@@ -454,10 +455,11 @@ const Dashboard = () => {
       >
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link to="/admin/add/product" className="nav-link">
           <button className="flex items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
             <FiPackage className="h-5 w-5 text-luxury-gold mr-2" />
             <span className="text-sm font-medium text-gray-700">Add Product</span>
-          </button>
+          </button></Link>
           <button className="flex items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
             <FiShoppingCart className="h-5 w-5 text-luxury-gold mr-2" />
             <span className="text-sm font-medium text-gray-700">Process Orders</span>
