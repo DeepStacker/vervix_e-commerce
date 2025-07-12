@@ -9,9 +9,6 @@ const nextConfig = {
   // Disable x-powered-by header
   poweredByHeader: false,
 
-  // Allow external host requests for development
-  allowedDevOrigins: ['*.clackypaas.com'],
-
   // Environment variables configuration
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,

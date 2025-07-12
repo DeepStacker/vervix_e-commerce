@@ -1,13 +1,9 @@
 import type { Config } from "tailwindcss";
-import { fontFamily } from "tailwindcss/defaultTheme";
 
 const config: Config = {
   darkMode: ["class"],
   content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/lib/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   prefix: "",
   theme: {
@@ -20,12 +16,6 @@ const config: Config = {
     },
     extend: {
       // Custom font family definitions
-      fontFamily: {
-        sans: ["var(--font-inter)", ...fontFamily.sans],
-        mono: ["var(--font-geist-mono)", ...fontFamily.mono],
-        display: ["var(--font-inter)", ...fontFamily.sans],
-        body: ["var(--font-inter)", ...fontFamily.sans],
-      },
       
       // Extended color palette for admin theme
       colors: {
@@ -73,7 +63,7 @@ const config: Config = {
           foreground: "hsl(var(--card-foreground))",
         },
         sidebar: {
-          DEFAULT: "hsl(var(--sidebar-background))",
+          DEFAULT: "hsl(var(--sidebar))",
           foreground: "hsl(var(--sidebar-foreground))",
           primary: "hsl(var(--sidebar-primary))",
           "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
@@ -185,7 +175,6 @@ const config: Config = {
         avatar: "50%",
       },
       
-      // Shadow utilities
       boxShadow: {
         xs: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
         sm: "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
