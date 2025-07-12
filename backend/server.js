@@ -48,6 +48,17 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Root route
+app.get('/', (req, res) => {
+  res.status(200).json({
+    message: 'Welcome to Vervix E-commerce API',
+    version: '1.0.0',
+    documentation: '/api/docs',
+    healthCheck: '/api/health',
+    status: 'online'
+  });
+});
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);

@@ -1,6 +1,42 @@
+# Clacky-related configuration
+# Keep existing entries
 node_modules
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Language-specific files (Node.js/JavaScript)
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+*.log
+logs/
+.nyc_output
+coverage/
+
+# Framework-related files (React/Express)
+dist/
+build/
+tmp/
+temp/
+uploads/
+
+# Package manager directories
+node_modules/
+
+# Environment files
+.env*
+!.env.example
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Editor/IDE files
+.vscode/
+.idea/
+*.swp
+*.swo

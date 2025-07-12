@@ -1,70 +1,43 @@
 {
   "name": "vervix-frontend",
   "version": "1.0.0",
-  "description": "Vervix E-commerce Frontend - Luxury Fashion Website",
-  "homepage": ".",
   "private": true,
+  "description": "Vervix luxury e-commerce platform frontend application",
   "dependencies": {
-    "@headlessui/react": "^1.7.13",
-    "@heroicons/react": "^2.0.16",
-    "@stripe/react-stripe-js": "^2.9.0",
-    "@stripe/stripe-js": "^1.54.2",
-    "@testing-library/jest-dom": "^5.16.5",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^14.4.3",
-    "aos": "^2.3.4",
+    "@stripe/react-stripe-js": "^3.7.0",
+    "@stripe/stripe-js": "^7.4.0",
+    "@tanstack/react-query": "^4.24.10",
+    "@tanstack/react-query-devtools": "^4.24.10",
     "axios": "^1.3.4",
-    "chart.js": "^4.5.0",
-    "clsx": "^1.2.1",
-    "date-fns": "^2.29.3",
-    "framer-motion": "^10.0.1",
-    "gsap": "^3.11.4",
-    "lottie-react": "^2.4.0",
+    "framer-motion": "^9.0.7",
     "react": "^18.2.0",
-    "react-chartjs-2": "^5.3.0",
     "react-dom": "^18.2.0",
-    "react-dropzone": "^14.2.3",
-    "react-error-boundary": "^6.0.0",
-    "react-helmet-async": "^1.3.0",
-    "react-hook-form": "^7.43.5",
-    "react-hot-toast": "^2.4.0",
-    "react-icons": "^4.8.0",
-    "react-image-gallery": "^1.2.11",
-    "react-intersection-observer": "^9.4.3",
-    "react-lazyload": "^3.2.0",
-    "react-loading-skeleton": "^3.1.1",
-    "react-modal": "^3.16.3",
-    "react-model": "^4.3.1",
-    "react-query": "^3.39.3",
+    "react-hook-form": "^7.43.1",
+    "react-hot-toast": "^2.5.2",
+    "react-icons": "^4.7.1",
     "react-router-dom": "^6.8.1",
     "react-scripts": "5.0.1",
-    "react-select": "^5.7.0",
     "react-toastify": "^11.0.5",
-    "styled-components": "^5.3.9",
-    "swiper": "^9.1.1",
-    "tailwindcss": "^3.2.7",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^3.1.1"
   },
   "devDependencies": {
-    "@types/aos": "^3.0.4",
-    "autoprefixer": "^10.4.14",
-    "eslint-config-prettier": "^8.7.0",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "autoprefixer": "^10.4.13",
     "postcss": "^8.4.21",
-    "prettier": "^2.8.4"
+    "tailwindcss": "^3.2.7"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "format": "prettier --write src/**/*.{js,jsx}",
-    "lint": "eslint src/**/*.{js,jsx}"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [
       "react-app",
-      "react-app/jest",
-      "prettier"
+      "react-app/jest"
     ]
   },
   "browserslist": {
